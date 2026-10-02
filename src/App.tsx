@@ -62,7 +62,7 @@ function App() {
         .to('.entry-glow', { opacity: 0.9, scale: 1.5, duration: 2 }, 1)
         .to('.intro-logo', { scale: 0.72, opacity: 0, duration: 1.4 }, 1.1)
         .to('.intro-copy', { yPercent: -20, opacity: 1, duration: 1.2 }, 1.6)
-        .to('.intro-hint', { opacity: 0, duration: 0.4 }, 0);
+        .to('.intro-hint', { opacity: 0, duration: 0.4 }, 0.25);
 
       mobileMotion.add('(max-width: 760px)', () => {
         const heroSection = intro.nextElementSibling as HTMLElement | null;
