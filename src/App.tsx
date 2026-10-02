@@ -94,6 +94,49 @@ function App() {
         };
       });
 
+      const aboutSection = document.querySelector<HTMLElement>('.about-section');
+      if (aboutSection) {
+        const aboutBackdrop = aboutSection.querySelector<HTMLElement>('.about-scene-backdrop');
+        const aboutOpening = aboutSection.querySelector<HTMLElement>('.about-scene-opening');
+        const aboutStage = aboutSection.querySelector<HTMLElement>('.about-stage');
+        const parchmentCards = Array.from(aboutSection.querySelectorAll<HTMLElement>('.practice-scroll'));
+        const aboutTimeline = gsap.timeline({
+          scrollTrigger: {
+            trigger: aboutSection,
+            start: 'top top',
+            end: 'bottom bottom',
+            scrub: 1,
+            pin: aboutStage ?? false,
+            pinSpacing: false,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        if (aboutBackdrop && aboutOpening) {
+          aboutTimeline
+            .to(aboutBackdrop, { opacity: 0, duration: 0.9 }, 0)
+            .to(aboutOpening, { opacity: 0, y: -26, scale: 0.985, filter: 'blur(2px)', duration: 0.9 }, 0);
+        }
+
+        const scrollDistance = () => window.innerWidth * (window.innerWidth <= 760 ? 1.15 : 1.25);
+        let cardStart = 1;
+
+        parchmentCards.forEach((card) => {
+          aboutTimeline
+            .fromTo(card,
+              { x: () => -scrollDistance(), y: 0, rotation: -1.5, scale: 0.97, autoAlpha: 0 },
+              { x: 0, y: 0, rotation: 0, scale: 1, autoAlpha: 1, duration: 1.4, ease: 'power1.out' },
+              cardStart,
+            )
+            .to({}, { duration: 1.5 }, cardStart + 1.4)
+            .to(card,
+              { x: () => scrollDistance(), y: 0, rotation: 1.5, scale: 0.98, autoAlpha: 0, duration: 1.4, ease: 'power1.in' },
+              cardStart + 2.9,
+            );
+          cardStart += 3.55;
+        });
+      }
+
       gsap.utils.toArray<HTMLElement>('.reveal').forEach((element) => {
         gsap.fromTo(element, { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 1, ease: 'power2.out', scrollTrigger: { trigger: element, start: 'top 84%', once: true } });
       });
@@ -156,15 +199,62 @@ function App() {
           <div className="hero-content reveal"><p className="eyebrow">DO-ZEN-DO</p><h2>El cuerpo aprende.<br /><em>La mente permanece.</em></h2><button className="text-link" onClick={() => scrollTo('about')}>Conocer la escuela <ArrowRight size={17} /></button></div>
         </section>
 
-        <section className="about-section section-paper" id="about">
-          <div className="section-intro reveal"><p className="eyebrow">01 · LA PRÁCTICA</p><h2>Un espacio para<br /><em>volver al centro.</em></h2></div>
-          <div className="about-grid"><div className="vertical-note">DO · ZEN · DO</div><div className="about-copy reveal"><p>Do-Zen-Do es una escuela de artes marciales coreanas en Castelldefels. Este espacio queda preparado para explicar con precisión la práctica, los grupos y la identidad de la escuela cuando la información oficial esté confirmada.</p><p>La disciplina se encuentra con la calma: técnica, atención y respeto por el espacio compartido.</p><div className="value-line"><span>01</span><strong>Precisión</strong><span>02</span><strong>Presencia</strong><span>03</span><strong>Disciplina</strong></div></div></div>
+        <section className="about-section" id="about" aria-label="La práctica de Do-Zen-Do">
+          <div className="about-scroll-track">
+            <div className="about-stage">
+              <div className="about-scene-backdrop" />
+              <div className="about-scene-opening">
+                <div className="section-intro"><p className="eyebrow">01 · LA PRÁCTICA</p><h2>Un espacio para<br /><em>volver al centro.</em></h2></div>
+                <div className="about-grid">
+                  <div className="vertical-note">DO · ZEN · DO</div>
+                  <div className="about-copy">
+                    <p>Do-Zen-Do es una escuela de artes marciales coreanas en Castelldefels. Un espacio de práctica donde el entrenamiento físico se encuentra con la atención, el control y el respeto. Cada movimiento se trabaja con intención: aprender a ejecutar con precisión, permanecer presente en cada instante y construir una disciplina que trascienda el entrenamiento.</p>
+                    <div className="value-line"><span>01</span><strong>Precisión</strong><span>02</span><strong>Presencia</strong><span>03</span><strong>Disciplina</strong></div>
+                  </div>
+                </div>
+              </div>
+              <div className="practice-scroll-stage" aria-label="Principios de la práctica">
+                <article className="practice-scroll" aria-label="01 Precisión">
+                  <span className="scroll-rod scroll-rod-top" aria-hidden="true" />
+                  <span className="scroll-rod scroll-rod-bottom" aria-hidden="true" />
+                  <span className="scroll-edition">ARCHIVO DE PRÁCTICA · DO-ZEN-DO</span>
+                  <span className="scroll-number">01</span>
+                  <span className="scroll-rule" aria-hidden="true" />
+                  <h3>PRECISIÓN</h3>
+                  <p>Cada movimiento comienza con atención. La técnica no busca únicamente fuerza, sino control, medida y exactitud.</p>
+                  <span className="scroll-seal" aria-hidden="true" />
+                </article>
+                <article className="practice-scroll" aria-label="02 Presencia">
+                  <span className="scroll-rod scroll-rod-top" aria-hidden="true" />
+                  <span className="scroll-rod scroll-rod-bottom" aria-hidden="true" />
+                  <span className="scroll-edition">ARCHIVO DE PRÁCTICA · DO-ZEN-DO</span>
+                  <span className="scroll-number">02</span>
+                  <span className="scroll-rule" aria-hidden="true" />
+                  <h3>PRESENCIA</h3>
+                  <p>Estar presente significa permanecer atento al cuerpo, al movimiento y al momento. La práctica comienza cuando dejamos de movernos en automático.</p>
+                  <span className="scroll-seal" aria-hidden="true" />
+                </article>
+                <article className="practice-scroll" aria-label="03 Disciplina">
+                  <span className="scroll-rod scroll-rod-top" aria-hidden="true" />
+                  <span className="scroll-rod scroll-rod-bottom" aria-hidden="true" />
+                  <span className="scroll-edition">ARCHIVO DE PRÁCTICA · DO-ZEN-DO</span>
+                  <span className="scroll-number">03</span>
+                  <span className="scroll-rule" aria-hidden="true" />
+                  <h3>DISCIPLINA</h3>
+                  <p>La disciplina convierte la práctica en camino. Repetir, corregir y continuar: cada sesión construye algo que permanece más allá del entrenamiento.</p>
+                  <span className="scroll-seal" aria-hidden="true" />
+                </article>
+              </div>
+            </div>
+          </div>
         </section>
 
         <section className="history-section section-dark" id="historia">
           <div className="history-heading reveal"><p className="eyebrow">02 · HISTORIA</p><h2>Descubrir<br /><em>poco a poco.</em></h2><p>La historia de Do-Zen-Do se incorporará aquí con fotografías, documentos y relatos confirmados por la escuela.</p></div>
-          <div className="history-canvas" aria-label="Galería editorial de imágenes históricas pendientes">
-            <div className="history-image history-image-a placeholder-image"><span>FOTOGRAFÍA<br />HISTÓRICA</span></div><div className="history-image history-image-b placeholder-image"><span>ENTRENAMIENTO<br /><small>IMAGEN PENDIENTE</small></span></div><div className="history-image history-image-c placeholder-image"><span>ARCHIVO<br />DO-ZEN-DO</span></div>
+          <div className="history-canvas" aria-label="Galería de imágenes de Do-Zen-Do">
+            <div className="history-image history-image-a"><img src="/images/HISTORIA%20DE%20DOZENDO.PNG" alt="Fotografía histórica de la práctica de Do-Zen-Do" /></div>
+            <div className="history-image history-image-b"><img src="/images/entrenamiento.jpg" alt="Entrenamiento de artes marciales en Do-Zen-Do" /></div>
+            <div className="history-image history-image-c"><img src="/images/campeonato.jpg" alt="Participantes de Do-Zen-Do en un campeonato" /></div>
           </div>
         </section>
 
