@@ -24,6 +24,7 @@ function App() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced) return;
 
+    const mobileMotion = gsap.matchMedia();
     const context = gsap.context(() => {
       ScrollTrigger.create({
         trigger: '.intro',
@@ -63,6 +64,36 @@ function App() {
         .to('.intro-copy', { yPercent: -20, opacity: 1, duration: 1.2 }, 1.6)
         .to('.intro-hint', { opacity: 0, duration: 0.4 }, 0);
 
+      mobileMotion.add('(max-width: 760px)', () => {
+        const heroSection = intro.nextElementSibling as HTMLElement | null;
+        const heroImage = heroSection?.querySelector<HTMLImageElement>('.hero-image');
+        if (!heroSection || !heroImage) return;
+
+        const getPanDistance = () => Math.min(0, heroSection.clientWidth - heroImage.getBoundingClientRect().width);
+        const pan = gsap.timeline({
+          repeat: -1,
+          yoyo: true,
+          paused: true,
+        });
+        pan.to(heroImage, { x: getPanDistance, duration: 20, ease: 'none' })
+          .to(heroImage, { x: getPanDistance, duration: 1, ease: 'none' });
+        const trigger = ScrollTrigger.create({
+          trigger: heroSection,
+          start: 'top bottom',
+          end: 'bottom top',
+          onEnter: () => pan.play(),
+          onEnterBack: () => pan.play(),
+          onLeave: () => pan.pause(),
+          onLeaveBack: () => pan.pause(),
+          invalidateOnRefresh: true,
+        });
+
+        return () => {
+          trigger.kill();
+          pan.kill();
+        };
+      });
+
       gsap.utils.toArray<HTMLElement>('.reveal').forEach((element) => {
         gsap.fromTo(element, { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 1, ease: 'power2.out', scrollTrigger: { trigger: element, start: 'top 84%', once: true } });
       });
@@ -73,7 +104,10 @@ function App() {
       gsap.to('.blade', { xPercent: 62, rotate: 2, scrollTrigger: { trigger: '.hwando-section', start: 'top 75%', end: 'bottom 65%', scrub: 1 } });
       gsap.to('.sword-glint', { opacity: 1, scrollTrigger: { trigger: '.hwando-section', start: 'top 40%', end: 'bottom 60%', scrub: true } });
     }, intro);
-    return () => context.revert();
+    return () => {
+      context.revert();
+      mobileMotion.revert();
+    };
   }, []);
 
   const scrollTo = (id: string) => {
@@ -117,7 +151,7 @@ function App() {
         </section>
 
         <section className="hero-section section-dark">
-          <div className="hero-image placeholder-image" role="img" aria-label="Placeholder pendiente para fotografía oficial del Dojang"><span>IMAGEN OFICIAL DEL DOJANG<br /><small>PENDIENTE DE INCORPORAR</small></span></div>
+          <img className="hero-image" src="/images/gimnasiodozendo.jpg" alt="Interior del gimnasio Do-Zen-Do" />
           <div className="hero-overlay" />
           <div className="hero-content reveal"><p className="eyebrow">DO-ZEN-DO</p><h2>El cuerpo aprende.<br /><em>La mente permanece.</em></h2><button className="text-link" onClick={() => scrollTo('about')}>Conocer la escuela <ArrowRight size={17} /></button></div>
         </section>
