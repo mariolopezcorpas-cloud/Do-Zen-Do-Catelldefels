@@ -179,6 +179,7 @@ function App() {
       <main>
         <section className="intro" id="inicio" ref={introRef} aria-label="Entrada a Do-Zen-Do">
           <div className="door-stage">
+            <img className="mobile-intro-logo" src="/images/logo/Captura.PNG" alt="Do-Zen-Do Martial Arts" />
             <div className="temple-roof" aria-hidden="true" />
             <div className="door-surround" aria-hidden="true" />
             <div className="entry-glow" />
