@@ -1,7 +1,7 @@
 export const siteData = {
   name: 'Do-Zen-Do',
-  location: 'Castelldefels',
-  description: 'Escuela de artes marciales coreanas en Castelldefels. Información, horarios y contacto próximamente.',
+  location: 'Castelldefels - Gavà',
+  description: 'Escuela de artes marciales coreanas con gimnasios en Castelldefels y Gavà. Información, horarios y contacto próximamente.',
   contact: {
     address: '[Dirección pendiente de confirmar]',
     phone: '[Teléfono pendiente de confirmar]',
