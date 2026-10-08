@@ -20,6 +20,8 @@ function App() {
   const [formMessage, setFormMessage] = useState('');
   const introRef = useRef<HTMLElement>(null);
   const welcomeLeadTextRef = useRef<HTMLSpanElement>(null);
+  const debugActive = new URLSearchParams(window.location.search).has('debugIOS');
+  const [debugData, setDebugData] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const textElement = welcomeLeadTextRef.current;
@@ -139,7 +141,11 @@ function App() {
 
     const updateKeyedFrame = () => {
       drawKeyedFrame();
-      videoFrameCallbackId = video.requestVideoFrameCallback(updateKeyedFrame);
+      if (typeof video.requestVideoFrameCallback === 'function') {
+        videoFrameCallbackId = video.requestVideoFrameCallback(updateKeyedFrame);
+      } else {
+        videoFrameCallbackActive = false;
+      }
     };
 
     const startVideoFrameCallbacks = () => {
@@ -152,11 +158,15 @@ function App() {
       seekFrameId = 0;
       const targetTime = Number(video.dataset.targetTime ?? 0);
       if (
-        video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA
+        video.duration > 0
         && !video.seeking
-        && Math.abs(video.currentTime - targetTime) > 0.008
+        && Math.abs(video.currentTime - targetTime) > 0.012
       ) {
-        video.currentTime = targetTime;
+        try {
+          video.currentTime = targetTime;
+        } catch {
+          // ignore
+        }
       }
     };
 
@@ -168,11 +178,42 @@ function App() {
       video.pause();
       ScrollTrigger.refresh();
       scheduleVideoSync();
+      if (debugActive) {
+        setDebugData(d => ({
+          ...d,
+          'video.duration': String(video.duration),
+          'video.videoWidth': String(video.videoWidth),
+          'video.videoHeight': String(video.videoHeight),
+          'video.readyState': String(video.readyState),
+          'video.networkState': String(video.networkState),
+        }));
+      }
     };
     const handleFrame = () => {
       drawKeyedFrame();
       startVideoFrameCallbacks();
       scheduleVideoSync();
+      if (debugActive) {
+        setDebugData(d => ({
+          ...d,
+          'video.readyState': String(video.readyState),
+          'video.currentTime': video.currentTime.toFixed(3),
+        }));
+      }
+    };
+    const handleError = () => {
+      if (debugActive) {
+        const err = video.error;
+        if (err) {
+          setDebugData(d => ({
+            ...d,
+            'video.error.code': String(err.code),
+            'video.error.message': err.message || 'n/a',
+          }));
+        } else {
+          setDebugData(d => ({ ...d, 'video.error': 'none' }));
+        }
+      }
     };
 
     video.dataset.targetTime = '0';
@@ -180,6 +221,19 @@ function App() {
     video.addEventListener('canplaythrough', handleMetadata);
     video.addEventListener('loadeddata', handleFrame);
     video.addEventListener('seeked', handleFrame);
+    video.addEventListener('playing', handleFrame);
+    video.addEventListener('timeupdate', () => {
+      if (debugActive) {
+        setDebugData(d => ({ ...d, 'video.currentTime': video.currentTime.toFixed(3) }));
+      }
+    });
+    video.addEventListener('error', handleError);
+    video.addEventListener('stalled', () => {
+      if (debugActive) setDebugData(d => ({ ...d, 'video.event': 'stalled' }));
+    });
+    video.addEventListener('waiting', () => {
+      if (debugActive) setDebugData(d => ({ ...d, 'video.event': 'waiting' }));
+    });
     video.addEventListener('scrollprogress', scheduleVideoSync);
 
     if (video.readyState >= HTMLMediaElement.HAVE_METADATA) handleMetadata();
@@ -192,13 +246,18 @@ function App() {
       video.removeEventListener('canplaythrough', handleMetadata);
       video.removeEventListener('loadeddata', handleFrame);
       video.removeEventListener('seeked', handleFrame);
+      video.removeEventListener('playing', handleFrame);
+      video.removeEventListener('timeupdate', () => {});
+      video.removeEventListener('error', handleError);
+      video.removeEventListener('stalled', () => {});
+      video.removeEventListener('waiting', () => {});
       video.removeEventListener('scrollprogress', scheduleVideoSync);
       if (seekFrameId) cancelAnimationFrame(seekFrameId);
       if (videoFrameCallbackId !== null && typeof video.cancelVideoFrameCallback === 'function') {
         video.cancelVideoFrameCallback(videoFrameCallbackId);
       }
     };
-  }, []);
+  }, [debugActive]);
 
   useEffect(() => {
     const intro = introRef.current;
@@ -302,14 +361,19 @@ function App() {
         const heroImage = heroSection?.querySelector<HTMLImageElement>('.hero-image');
         if (!heroSection || !heroImage) return;
 
-        const getPanDistance = () => Math.min(0, heroSection.clientWidth - heroImage.getBoundingClientRect().width);
+        const computePan = () => {
+          const rect = heroImage.getBoundingClientRect();
+          const sectionW = heroSection.clientWidth;
+          return Math.min(0, sectionW - rect.width);
+        };
+
         const pan = gsap.timeline({
           repeat: -1,
           yoyo: true,
           paused: true,
         });
-        pan.to(heroImage, { x: getPanDistance, duration: 20, ease: 'none' })
-          .to(heroImage, { x: getPanDistance, duration: 1, ease: 'none' });
+        pan.to(heroImage, { x: computePan, duration: 20, ease: 'none' })
+          .to(heroImage, { x: computePan, duration: 1, ease: 'none' });
         const trigger = ScrollTrigger.create({
           trigger: heroSection,
           start: 'top bottom',
@@ -319,11 +383,25 @@ function App() {
           onLeave: () => pan.pause(),
           onLeaveBack: () => pan.pause(),
           invalidateOnRefresh: true,
+          onRefresh: () => {
+            if (debugActive) {
+              const r = heroImage.getBoundingClientRect();
+              setDebugData(d => ({ ...d, 'heroImage.rect': `${r.width.toFixed(1)}x${r.height.toFixed(1)}@${r.left.toFixed(1)}` }));
+            }
+          },
         });
+
+        const onImgLoad = () => ScrollTrigger.refresh();
+        if (heroImage.complete) {
+          ScrollTrigger.refresh();
+        } else {
+          heroImage.addEventListener('load', onImgLoad, { once: true });
+        }
 
         return () => {
           trigger.kill();
           pan.kill();
+          heroImage.removeEventListener('load', onImgLoad);
         };
       });
 
@@ -526,6 +604,16 @@ function App() {
       </main>
 
       <footer className="site-footer"><div className="footer-brand"><img src={visualAssets.logo} alt="Logo de Do-Zen-Do" /><div><strong>DO-ZEN-DO</strong><span>Castelldefels · Gavà</span></div></div><div className="footer-nav">{navItems.map((item) => <button key={item.id} onClick={() => scrollTo(item.id)}>{item.label}</button>)}</div><a className="social-link" href="#contacto" aria-label="Instagram pendiente de confirmar"><Instagram size={18} /><span>Instagram</span><MoveUpRight size={14} /></a><p className="copyright">© {new Date().getFullYear()} Do-Zen-Do Castelldefels · Gavà</p></footer>
+      {debugActive && (
+        <div style={{ position: 'fixed', zIndex: 9999, left: 8, right: 8, bottom: 8, maxHeight: '40vh', overflow: 'auto', background: 'rgba(0,0,0,0.9)', color: '#fff', fontSize: 10, padding: 8, border: '1px solid #555', fontFamily: 'monospace' }}>
+          <strong>IOS DEBUG (solo ?debugIOS=1)</strong>
+          <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{JSON.stringify(debugData, null, 2)}</pre>
+          <div>VP: {window.innerWidth}x{window.innerHeight} DPR:{window.devicePixelRatio}</div>
+          <div>videoEl: {introRef.current?.querySelector<HTMLVideoElement>('.welcome-sword-source') ? 'exists' : 'no'}</div>
+          <div>canvasEl: {introRef.current?.querySelector<HTMLCanvasElement>('.welcome-sword-canvas') ? 'exists' : 'no'}</div>
+          <div>heroEl: {introRef.current?.nextElementSibling?.querySelector<HTMLImageElement>('.hero-image') ? 'exists' : 'no'}</div>
+        </div>
+      )}
     </div>
   );
 }
