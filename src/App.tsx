@@ -13,6 +13,8 @@ const navItems = [
   { label: 'Contacto', id: 'contacto' },
 ];
 
+
+
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [formMessage, setFormMessage] = useState('');
@@ -450,7 +452,7 @@ function App() {
         </section>
 
         <section className="hero-section section-dark">
-          <img className="hero-image" src="/images/gimnasiodozendo.jpg" alt="Interior del gimnasio Do-Zen-Do" />
+          <img className="hero-image" src="/images/gimnasiodozendo.jpg" alt="Interior del gimnasio Do-Zen-Do" loading="eager" decoding="async" />
           <div className="hero-overlay" />
           <div className="hero-content reveal"><p className="eyebrow">DO-ZEN-DO</p><h2>El cuerpo aprende.<br /><em>La mente permanece.</em></h2><button className="text-link" onClick={() => scrollTo('about')}>Conocer la escuela <ArrowRight size={17} /></button></div>
         </section>
